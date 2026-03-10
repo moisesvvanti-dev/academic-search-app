@@ -6,15 +6,18 @@
 - [x] Configurar 5 abas no tab bar
 - [x] Mapear ícones no icon-symbol.tsx
 
-## Busca Acadêmica
-- [x] Tela principal de busca com campo de texto
-- [x] Integração com API de busca acadêmica (Semantic Scholar / CrossRef / PubMed)
-- [x] Filtros avançados (área, tipo, idioma)
-- [x] Lista de resultados com cards
-- [x] Filtragem de resultados não relacionados
-- [x] Tela de detalhe do artigo com resumo completo
-- [x] Exibição de todos os links fonte
-- [x] Cache offline dos últimos resultados
+## Busca Universal (Melhorado)
+- [x] Integrar Wikipedia (enciclopédia)
+- [x] Integrar Open Library (livros)
+- [x] Integrar Wikidata (dados estruturados)
+- [x] Integrar arXiv (pré-prints científicos)
+- [x] Integrar Project Gutenberg (livros públicos)
+- [x] Integrar DuckDuckGo (busca geral)
+- [x] Remover filtros científicos restritivos
+- [x] Retornar TODOS os resultados encontrados
+- [x] Modal de detalhe com links clicáveis
+- [x] Sugestões de busca na tela inicial
+- [x] Cache offline com TTL de 10 min
 
 ## Tabelas Numéricas
 - [x] Tela de tabelas com seletor de base
@@ -45,11 +48,11 @@
 - [x] Tela de histórico com lista
 - [x] Opção de limpar histórico
 
-## Melhorias Avançadas
-- [x] Modo offline com cache inteligente (cache em memória com TTL de 10 min)
-- [x] Sugestões de busca na tela inicial
-- [x] Testes unitários (23 testes passando)
+## Bugs Corrigidos
+- [x] Busca acadêmica retorna "nada encontrado" — CORRIGIDO na v1.1
+- [x] Busca universal implementada — v1.2
 
-
-## Bugs Reportados
-- [x] Busca acadêmica retorna "nada encontrado" mesmo com termos válidos — CORRIGIDO: filtragem de relevância menos restritiva, melhor tratamento de erros, logs de debug
+## Testes
+- [x] 23 testes de calculadora (PASSANDO)
+- [x] 10 testes de busca universal (PASSANDO)
+- [x] Total: 33 testes PASSANDO

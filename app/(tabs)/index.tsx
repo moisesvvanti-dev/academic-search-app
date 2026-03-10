@@ -17,34 +17,18 @@ import {
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
-import { searchAcademicPapers, AcademicPaper, SearchFilters } from "@/lib/academic-search";
+import { universalSearch, SearchResult } from "@/lib/universal-search";
 import { useHistory } from "@/lib/history-context";
-
-const AREAS = [
-  "Todas", "Biologia", "Química", "Física", "Medicina", "Farmácia",
-  "Ecologia", "Genética", "Neurociência", "Biotecnologia", "Zoologia",
-  "Botânica", "Microbiologia", "Bioquímica", "Engenharia",
-];
-
-const TYPES = ["Todos", "Artigo", "TCC", "Dissertação", "Tese", "Revisão"];
-const LANGUAGES = ["Todos", "Português", "Inglês", "Espanhol"];
 
 export default function SearchScreen() {
   const colors = useColors();
   const { addSearchHistory } = useHistory();
 
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<AcademicPaper[]>([]);
+  const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
-  const [selectedPaper, setSelectedPaper] = useState<AcademicPaper | null>(null);
-
-  const [filters, setFilters] = useState<SearchFilters>({
-    area: "Todas",
-    type: "Todos",
-    language: "Todos",
-  });
+  const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
 
   const inputRef = useRef<TextInput>(null);
 
@@ -55,25 +39,19 @@ export default function SearchScreen() {
     setSearched(true);
 
     try {
-      const activeFilters: SearchFilters = {};
-      if (filters.area && filters.area !== "Todas") activeFilters.area = filters.area;
-      if (filters.type && filters.type !== "Todos") activeFilters.type = filters.type;
-      if (filters.language && filters.language !== "Todos") activeFilters.language = filters.language;
-
-      const papers = await searchAcademicPapers(query.trim(), activeFilters);
+      const papers = await universalSearch(query.trim());
       setResults(papers);
 
       addSearchHistory({
         query: query.trim(),
         resultsCount: papers.length,
-        filters: activeFilters,
       });
     } catch (e) {
       Alert.alert("Erro", "Não foi possível realizar a busca. Verifique sua conexão.");
     } finally {
       setLoading(false);
     }
-  }, [query, filters, addSearchHistory]);
+  }, [query, addSearchHistory]);
 
   const openLink = useCallback((url: string) => {
     Linking.openURL(url).catch(() => {
@@ -81,80 +59,78 @@ export default function SearchScreen() {
     });
   }, []);
 
-  const renderPaperCard = useCallback(({ item }: { item: AcademicPaper }) => (
+  const getSourceColor = (source: string) => {
+    switch (source) {
+      case "Wikipedia":
+        return "#3366CC";
+      case "arXiv":
+        return "#B31B1B";
+      case "Open Library":
+        return "#6A1B9A";
+      case "Project Gutenberg":
+        return "#1B5E20";
+      case "Wikidata":
+        return "#F57C00";
+      default:
+        return colors.primary;
+    }
+  };
+
+  const renderResultCard = ({ item }: { item: SearchResult }) => (
     <TouchableOpacity
       style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
-      onPress={() => setSelectedPaper(item)}
+      onPress={() => setSelectedResult(item)}
       activeOpacity={0.75}
     >
-      <View style={styles.cardHeader}>
-        <View style={[styles.sourceBadge, { backgroundColor: colors.primary + "20" }]}>
-          <Text style={[styles.sourceText, { color: colors.primary }]}>{item.source}</Text>
-        </View>
-        {item.isOpenAccess && (
-          <View style={[styles.openBadge, { backgroundColor: colors.success + "20" }]}>
-            <Text style={[styles.openText, { color: colors.success }]}>Acesso Livre</Text>
+      {item.image && (
+        <View style={styles.cardImage}>
+          {/* Placeholder para imagem */}
+          <View style={[styles.imagePlaceholder, { backgroundColor: colors.primary + "20" }]}>
+            <IconSymbol name="doc.fill" size={24} color={colors.primary} />
           </View>
-        )}
-        {item.year && (
-          <Text style={[styles.yearText, { color: colors.muted }]}>{item.year}</Text>
-        )}
-      </View>
-
-      <Text style={[styles.cardTitle, { color: colors.foreground }]} numberOfLines={3}>
-        {item.title}
-      </Text>
-
-      {item.authors.length > 0 && (
-        <Text style={[styles.authorsText, { color: colors.muted }]} numberOfLines={1}>
-          {item.authors.slice(0, 3).join(", ")}
-          {item.authors.length > 3 ? ` +${item.authors.length - 3}` : ""}
-        </Text>
+        </View>
       )}
 
-      {item.venue && (
-        <Text style={[styles.venueText, { color: colors.primary }]} numberOfLines={1}>
-          {item.venue}
+      <View style={styles.cardContent}>
+        <View style={styles.cardHeader}>
+          <View
+            style={[
+              styles.sourceBadge,
+              { backgroundColor: getSourceColor(item.source) + "20" },
+            ]}
+          >
+            <Text style={[styles.sourceText, { color: getSourceColor(item.source) }]}>
+              {item.source}
+            </Text>
+          </View>
+          {item.category && (
+            <Text style={[styles.categoryText, { color: colors.muted }]}>{item.category}</Text>
+          )}
+        </View>
+
+        <Text style={[styles.cardTitle, { color: colors.foreground }]} numberOfLines={2}>
+          {item.title}
         </Text>
-      )}
 
-      <Text style={[styles.abstractText, { color: colors.muted }]} numberOfLines={3}>
-        {item.abstract}
-      </Text>
-
-      <View style={styles.cardFooter}>
-        {item.citationCount !== undefined && item.citationCount > 0 && (
-          <Text style={[styles.citationText, { color: colors.muted }]}>
-            {item.citationCount} citações
+        {item.author && (
+          <Text style={[styles.authorText, { color: colors.muted }]} numberOfLines={1}>
+            {item.author}
           </Text>
         )}
-        <Text style={[styles.linksCount, { color: colors.primary }]}>
-          {item.links.length} link{item.links.length !== 1 ? "s" : ""} • Ver mais →
+
+        <Text style={[styles.descriptionText, { color: colors.muted }]} numberOfLines={2}>
+          {item.description}
         </Text>
+
+        {item.date && (
+          <Text style={[styles.dateText, { color: colors.muted }]}>{item.date}</Text>
+        )}
+
+        <View style={styles.cardFooter}>
+          <Text style={[styles.linkText, { color: colors.primary }]}>Ver mais →</Text>
+        </View>
       </View>
     </TouchableOpacity>
-  ), [colors]);
-
-  const renderFilterChips = (options: string[], selected: string, onSelect: (v: string) => void) => (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
-      {options.map((opt) => (
-        <TouchableOpacity
-          key={opt}
-          style={[
-            styles.chip,
-            {
-              backgroundColor: selected === opt ? colors.primary : colors.surface,
-              borderColor: selected === opt ? colors.primary : colors.border,
-            },
-          ]}
-          onPress={() => onSelect(opt)}
-        >
-          <Text style={[styles.chipText, { color: selected === opt ? "#fff" : colors.foreground }]}>
-            {opt}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
   );
 
   return (
@@ -162,11 +138,11 @@ export default function SearchScreen() {
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <View style={styles.headerTop}>
-          <IconSymbol name="graduationcap.fill" size={24} color={colors.primary} />
-          <Text style={[styles.headerTitle, { color: colors.foreground }]}>AcadêmicoSearch</Text>
+          <IconSymbol name="magnifyingglass" size={24} color={colors.primary} />
+          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Busca Universal</Text>
         </View>
         <Text style={[styles.headerSub, { color: colors.muted }]}>
-          Artigos científicos certificados para TCC
+          Pesquise qualquer coisa na internet
         </Text>
 
         {/* Search Bar */}
@@ -175,7 +151,7 @@ export default function SearchScreen() {
           <TextInput
             ref={inputRef}
             style={[styles.searchInput, { color: colors.foreground }]}
-            placeholder="Pesquisar artigos científicos..."
+            placeholder="Digite qualquer coisa..."
             placeholderTextColor={colors.muted}
             value={query}
             onChangeText={setQuery}
@@ -184,37 +160,33 @@ export default function SearchScreen() {
             autoCorrect={false}
           />
           {query.length > 0 && (
-            <TouchableOpacity onPress={() => { setQuery(""); setResults([]); setSearched(false); }}>
+            <TouchableOpacity
+              onPress={() => {
+                setQuery("");
+                setResults([]);
+                setSearched(false);
+              }}
+            >
               <IconSymbol name="xmark" size={18} color={colors.muted} />
             </TouchableOpacity>
           )}
         </View>
 
-        {/* Action Row */}
-        <View style={styles.actionRow}>
-          <TouchableOpacity
-            style={[styles.filterBtn, { borderColor: colors.border }]}
-            onPress={() => setShowFilters(true)}
-          >
-            <IconSymbol name="slider.horizontal.3" size={16} color={colors.primary} />
-            <Text style={[styles.filterBtnText, { color: colors.primary }]}>Filtros</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.searchBtn, { backgroundColor: colors.primary }]}
-            onPress={handleSearch}
-            disabled={loading || !query.trim()}
-          >
-            {loading ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <>
-                <IconSymbol name="magnifyingglass" size={16} color="#fff" />
-                <Text style={styles.searchBtnText}>Buscar</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
+        {/* Search Button */}
+        <TouchableOpacity
+          style={[styles.searchBtn, { backgroundColor: colors.primary }]}
+          onPress={handleSearch}
+          disabled={loading || !query.trim()}
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <>
+              <IconSymbol name="magnifyingglass" size={16} color="#fff" />
+              <Text style={styles.searchBtnText}>Buscar</Text>
+            </>
+          )}
+        </TouchableOpacity>
       </View>
 
       {/* Results */}
@@ -222,7 +194,7 @@ export default function SearchScreen() {
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.muted }]}>
-            Buscando em Semantic Scholar, CrossRef e PubMed...
+            Buscando em Wikipedia, arXiv, livros, e mais...
           </Text>
         </View>
       ) : searched && results.length === 0 ? (
@@ -230,22 +202,24 @@ export default function SearchScreen() {
           <IconSymbol name="exclamationmark.triangle.fill" size={48} color={colors.warning} />
           <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Nenhum resultado encontrado</Text>
           <Text style={[styles.emptyText, { color: colors.muted }]}>
-            Tente termos mais específicos ou ajuste os filtros.
+            Tente outro termo de busca.
           </Text>
         </View>
       ) : !searched ? (
         <View style={styles.centerContent}>
-          <IconSymbol name="doc.text.magnifyingglass" size={64} color={colors.primary + "60"} />
-          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Busque artigos científicos</Text>
+          <IconSymbol name="globe" size={64} color={colors.primary + "60"} />
+          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Busque qualquer coisa</Text>
           <Text style={[styles.emptyText, { color: colors.muted }]}>
-            Pesquise em bases como Semantic Scholar, CrossRef e PubMed. Resultados filtrados por relevância ao assunto.
+            Pesquise em Wikipedia, livros, artigos científicos, e muito mais.
           </Text>
           <View style={styles.suggestionsRow}>
-            {["fotossíntese", "CRISPR", "neurônios", "DNA recombinante"].map((s) => (
+            {["Python", "História do Brasil", "Astronomia", "Receitas"].map((s) => (
               <TouchableOpacity
                 key={s}
                 style={[styles.suggestionChip, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "30" }]}
-                onPress={() => { setQuery(s); }}
+                onPress={() => {
+                  setQuery(s);
+                }}
               >
                 <Text style={[styles.suggestionText, { color: colors.primary }]}>{s}</Text>
               </TouchableOpacity>
@@ -256,7 +230,7 @@ export default function SearchScreen() {
         <FlatList
           data={results}
           keyExtractor={(item) => item.id}
-          renderItem={renderPaperCard}
+          renderItem={renderResultCard}
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={
             <Text style={[styles.resultsCount, { color: colors.muted }]}>
@@ -267,48 +241,16 @@ export default function SearchScreen() {
         />
       )}
 
-      {/* Filters Modal */}
-      <Modal visible={showFilters} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.foreground }]}>Filtros de Busca</Text>
-              <TouchableOpacity onPress={() => setShowFilters(false)}>
-                <IconSymbol name="xmark" size={24} color={colors.foreground} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView>
-              <Text style={[styles.filterLabel, { color: colors.muted }]}>ÁREA DO CONHECIMENTO</Text>
-              {renderFilterChips(AREAS, filters.area || "Todas", (v) => setFilters((f) => ({ ...f, area: v })))}
-
-              <Text style={[styles.filterLabel, { color: colors.muted }]}>TIPO DE TRABALHO</Text>
-              {renderFilterChips(TYPES, filters.type || "Todos", (v) => setFilters((f) => ({ ...f, type: v })))}
-
-              <Text style={[styles.filterLabel, { color: colors.muted }]}>IDIOMA</Text>
-              {renderFilterChips(LANGUAGES, filters.language || "Todos", (v) => setFilters((f) => ({ ...f, language: v })))}
-            </ScrollView>
-
-            <TouchableOpacity
-              style={[styles.applyBtn, { backgroundColor: colors.primary }]}
-              onPress={() => { setShowFilters(false); if (query.trim()) handleSearch(); }}
-            >
-              <Text style={styles.applyBtnText}>Aplicar Filtros</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Paper Detail Modal */}
-      {selectedPaper && (
-        <Modal visible={!!selectedPaper} animationType="slide" transparent>
+      {/* Result Detail Modal */}
+      {selectedResult && (
+        <Modal visible={!!selectedResult} animationType="slide" transparent>
           <View style={styles.modalOverlay}>
             <View style={[styles.detailModal, { backgroundColor: colors.surface }]}>
               <View style={styles.modalHeader}>
                 <Text style={[styles.modalTitle, { color: colors.foreground }]} numberOfLines={2}>
-                  {selectedPaper.title}
+                  {selectedResult.title}
                 </Text>
-                <TouchableOpacity onPress={() => setSelectedPaper(null)}>
+                <TouchableOpacity onPress={() => setSelectedResult(null)}>
                   <IconSymbol name="xmark" size={24} color={colors.foreground} />
                 </TouchableOpacity>
               </View>
@@ -316,90 +258,57 @@ export default function SearchScreen() {
               <ScrollView style={styles.detailScroll} showsVerticalScrollIndicator={false}>
                 {/* Meta */}
                 <View style={styles.metaRow}>
-                  <View style={[styles.sourceBadge, { backgroundColor: colors.primary + "20" }]}>
-                    <Text style={[styles.sourceText, { color: colors.primary }]}>{selectedPaper.source}</Text>
-                  </View>
-                  {selectedPaper.year && (
-                    <Text style={[styles.yearText, { color: colors.muted }]}>{selectedPaper.year}</Text>
-                  )}
-                  {selectedPaper.isOpenAccess && (
-                    <View style={[styles.openBadge, { backgroundColor: colors.success + "20" }]}>
-                      <Text style={[styles.openText, { color: colors.success }]}>Acesso Livre</Text>
-                    </View>
-                  )}
-                </View>
-
-                {/* Authors */}
-                {selectedPaper.authors.length > 0 && (
-                  <View style={styles.detailSection}>
-                    <Text style={[styles.detailSectionTitle, { color: colors.primary }]}>Autores</Text>
-                    <Text style={[styles.detailText, { color: colors.foreground }]}>
-                      {selectedPaper.authors.join(", ")}
-                    </Text>
-                  </View>
-                )}
-
-                {/* Venue */}
-                {selectedPaper.venue && (
-                  <View style={styles.detailSection}>
-                    <Text style={[styles.detailSectionTitle, { color: colors.primary }]}>Publicado em</Text>
-                    <Text style={[styles.detailText, { color: colors.foreground }]}>{selectedPaper.venue}</Text>
-                  </View>
-                )}
-
-                {/* Fields */}
-                {selectedPaper.fields && selectedPaper.fields.length > 0 && (
-                  <View style={styles.detailSection}>
-                    <Text style={[styles.detailSectionTitle, { color: colors.primary }]}>Áreas</Text>
-                    <Text style={[styles.detailText, { color: colors.foreground }]}>
-                      {selectedPaper.fields.join(" • ")}
-                    </Text>
-                  </View>
-                )}
-
-                {/* Abstract */}
-                <View style={styles.detailSection}>
-                  <Text style={[styles.detailSectionTitle, { color: colors.primary }]}>Resumo</Text>
-                  <Text style={[styles.abstractFull, { color: colors.foreground }]}>
-                    {selectedPaper.abstract}
-                  </Text>
-                </View>
-
-                {/* DOI */}
-                {selectedPaper.doi && (
-                  <View style={styles.detailSection}>
-                    <Text style={[styles.detailSectionTitle, { color: colors.primary }]}>DOI</Text>
-                    <Text style={[styles.detailText, { color: colors.muted }]}>{selectedPaper.doi}</Text>
-                  </View>
-                )}
-
-                {/* Citations */}
-                {selectedPaper.citationCount !== undefined && (
-                  <View style={styles.detailSection}>
-                    <Text style={[styles.detailSectionTitle, { color: colors.primary }]}>Citações</Text>
-                    <Text style={[styles.detailText, { color: colors.foreground }]}>
-                      {selectedPaper.citationCount} citações
-                    </Text>
-                  </View>
-                )}
-
-                {/* Links */}
-                <View style={styles.detailSection}>
-                  <Text style={[styles.detailSectionTitle, { color: colors.primary }]}>
-                    Links Fonte ({selectedPaper.links.length})
-                  </Text>
-                  {selectedPaper.links.map((link, idx) => (
-                    <TouchableOpacity
-                      key={idx}
-                      style={[styles.linkBtn, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "30" }]}
-                      onPress={() => openLink(link)}
+                  <View
+                    style={[
+                      styles.sourceBadge,
+                      { backgroundColor: getSourceColor(selectedResult.source) + "20" },
+                    ]}
+                  >
+                    <Text
+                      style={[styles.sourceText, { color: getSourceColor(selectedResult.source) }]}
                     >
-                      <IconSymbol name="arrow.up.right.square" size={16} color={colors.primary} />
-                      <Text style={[styles.linkText, { color: colors.primary }]} numberOfLines={2}>
-                        {link}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                      {selectedResult.source}
+                    </Text>
+                  </View>
+                  {selectedResult.category && (
+                    <Text style={[styles.categoryText, { color: colors.muted }]}>
+                      {selectedResult.category}
+                    </Text>
+                  )}
+                  {selectedResult.date && (
+                    <Text style={[styles.dateText, { color: colors.muted }]}>{selectedResult.date}</Text>
+                  )}
+                </View>
+
+                {/* Author */}
+                {selectedResult.author && (
+                  <View style={styles.detailSection}>
+                    <Text style={[styles.detailSectionTitle, { color: colors.primary }]}>Autor</Text>
+                    <Text style={[styles.detailText, { color: colors.foreground }]}>
+                      {selectedResult.author}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Description */}
+                <View style={styles.detailSection}>
+                  <Text style={[styles.detailSectionTitle, { color: colors.primary }]}>Descrição</Text>
+                  <Text style={[styles.detailTextLarge, { color: colors.foreground }]}>
+                    {selectedResult.description}
+                  </Text>
+                </View>
+
+                {/* Link */}
+                <View style={styles.detailSection}>
+                  <TouchableOpacity
+                    style={[styles.linkBtn, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "30" }]}
+                    onPress={() => openLink(selectedResult.url)}
+                  >
+                    <IconSymbol name="arrow.up.right.square" size={16} color={colors.primary} />
+                    <Text style={[styles.linkBtnText, { color: colors.primary }]} numberOfLines={2}>
+                      Abrir fonte
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </ScrollView>
             </View>
@@ -447,31 +356,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
   },
-  actionRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  filterBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  filterBtnText: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
   searchBtn: {
-    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: 12,
+    borderRadius: 10,
   },
   searchBtnText: {
     color: "#fff",
@@ -527,10 +418,27 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 14,
-    padding: 14,
+    padding: 12,
     borderWidth: 1,
     marginBottom: 12,
-    gap: 6,
+    flexDirection: "row",
+    gap: 12,
+  },
+  cardImage: {
+    width: 60,
+    height: 80,
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  imagePlaceholder: {
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardContent: {
+    flex: 1,
+    gap: 4,
   },
   cardHeader: {
     flexDirection: "row",
@@ -547,47 +455,29 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
   },
-  openBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  openText: {
+  categoryText: {
     fontSize: 11,
-    fontWeight: "600",
-  },
-  yearText: {
-    fontSize: 12,
-    marginLeft: "auto",
   },
   cardTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
-    lineHeight: 21,
-  },
-  authorsText: {
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  venueText: {
-    fontSize: 12,
-    fontStyle: "italic",
-    lineHeight: 17,
-  },
-  abstractText: {
-    fontSize: 13,
     lineHeight: 19,
   },
-  cardFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 4,
+  authorText: {
+    fontSize: 12,
+    lineHeight: 17,
   },
-  citationText: {
+  descriptionText: {
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  dateText: {
     fontSize: 11,
   },
-  linksCount: {
+  cardFooter: {
+    marginTop: 4,
+  },
+  linkText: {
     fontSize: 12,
     fontWeight: "600",
   },
@@ -596,12 +486,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "flex-end",
-  },
-  modalContent: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: "80%",
   },
   detailModal: {
     borderTopLeftRadius: 20,
@@ -623,38 +507,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     flex: 1,
     lineHeight: 23,
-  },
-  filterLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  chipsScroll: {
-    marginBottom: 4,
-  },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
-    marginRight: 8,
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: "500",
-  },
-  applyBtn: {
-    marginTop: 20,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  applyBtnText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
   },
   detailScroll: {
     flex: 1,
@@ -680,22 +532,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
-  abstractFull: {
-    fontSize: 14,
+  detailTextLarge: {
+    fontSize: 15,
     lineHeight: 22,
   },
   linkBtn: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     gap: 8,
-    padding: 10,
-    borderRadius: 8,
+    padding: 12,
+    borderRadius: 10,
     borderWidth: 1,
-    marginBottom: 8,
   },
-  linkText: {
+  linkBtnText: {
     flex: 1,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: "600",
   },
 });
