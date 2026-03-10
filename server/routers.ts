@@ -3,9 +3,9 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { searchRouter } from "./search-router";
+import { authRouter } from "./auth-router";
 
 export const appRouter = router({
-  // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   search: searchRouter,
   auth: router({
@@ -17,14 +17,13 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+    register: authRouter._def.procedures.register,
+    login: authRouter._def.procedures.login,
+    requestPasswordReset: authRouter._def.procedures.requestPasswordReset,
+    verifyTempPasswordAndSetNew: authRouter._def.procedures.verifyTempPasswordAndSetNew,
+    updatePhone: authRouter._def.procedures.updatePhone,
+    getUserByEmail: authRouter._def.procedures.getUserByEmail,
   }),
-
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
 });
 
 export type AppRouter = typeof appRouter;

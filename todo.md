@@ -1,54 +1,39 @@
 # AcadêmicoSearch — TODO
 
-## Setup e Configuração
-- [x] Atualizar tema de cores (azul científico)
-- [x] Gerar logo do aplicativo
-- [x] Configurar 5 abas no tab bar
-- [x] Mapear ícones no icon-symbol.tsx
+## Funcionalidades Principais Implementadas
+- [x] Busca acadêmica com múltiplas APIs (Semantic Scholar, CrossRef, PubMed)
+- [x] Tabelas numéricas (binário, octal, decimal, hexadecimal) de 0 a 50
+- [x] Calculadora científica com passo a passo
+- [x] Tabuadas interativas com modo quiz
+- [x] Histórico de buscas e cálculos com AsyncStorage
+- [x] Busca universal na internet com DuckDuckGo
+- [x] Autenticação com email/senha
+- [x] Reset de senha via SMS com token temporário
+- [x] Busca real via internet (WiFi/dados móveis)
+- [x] Permissões de contatos para compartilhamento
+- [x] Compartilhamento de resultados via WhatsApp, Email, SMS
 
-## Busca com DuckDuckGo (v1.3)
-- [x] Instalar biblioteca duckduckgo-search
-- [x] Criar router backend com duckduckgo-search
-- [x] Implementar busca web, news e images
-- [x] Implementar busca combinada (web + news + images)
-- [x] Integrar no frontend com cache offline
-- [x] Atualizar tela de busca para usar DuckDuckGo
-
-## Tabelas Numéricas
-- [x] Tela de tabelas com seletor de base
-- [x] Tabela binário (0–50)
-- [x] Tabela octal (0–50)
-- [x] Tabela decimal (0–50)
-- [x] Tabela hexadecimal (0–50)
-- [x] Visualização simultânea de todas as bases
-- [x] Destaque visual da base selecionada
-
-## Calculadora Científica
-- [x] Display principal
-- [x] Teclado numérico e operadores básicos
-- [x] Funções científicas (sin, cos, tan, log, ln, √, x², π, e)
-- [x] Suporte a parênteses e precedência
-- [x] Painel de passo a passo detalhado
-- [x] Histórico de cálculos
-
-## Tabuadas
-- [x] Seletor de número (1–10)
-- [x] Tabela completa de multiplicação
-- [x] Animação de destaque ao tocar linha
-- [x] Modo quiz com feedback
-
-## Histórico Persistente
-- [x] Histórico de buscas com AsyncStorage
-- [x] Histórico de cálculos com AsyncStorage
-- [x] Tela de histórico com lista
-- [x] Opção de limpar histórico
+## Melhorias Implementadas
+- [x] Cache offline inteligente (10 min TTL)
+- [x] Filtros de busca avançados (por tipo: web, news, images)
+- [x] Sugestões de busca na tela inicial
+- [x] Tela de login com email e senha
+- [x] Tela de reset de senha com SMS
+- [x] Integração com banco de dados (MySQL + Drizzle ORM)
+- [x] Rotas protegidas com autenticação
+- [x] Compartilhamento com contatos do dispositivo
 
 ## Bugs Corrigidos
-- [x] Busca acadêmica retorna "nada encontrado" — CORRIGIDO na v1.1
-- [x] Busca universal implementada — v1.2
-- [x] Integração com duckduckgo-search — v1.3
+- [x] Busca acadêmica retorna "nada encontrado" — CORRIGIDO
+- [x] Erro de build APK (minSdkVersion) — CORRIGIDO
+- [x] Compatibilidade com Kotlin 2.0.21 — CORRIGIDO
+- [x] compileSdkVersion 35 para compatibilidade — CORRIGIDO
 
-## Testes
-- [x] 23 testes de calculadora (PASSANDO)
-- [x] 10 testes de busca universal (PASSANDO)
-- [x] Total: 33 testes PASSANDO
+## Próximas Melhorias Sugeridas
+- [ ] Exportação de resultados em PDF com formatação
+- [ ] Busca por voz com reconhecimento de fala
+- [ ] Favoritos com anotações pessoais
+- [ ] Notificações push de novos artigos em tópicos de interesse
+- [ ] Sincronização em nuvem de histórico e favoritos
+- [ ] Modo offline com cache inteligente de resultados populares
+- [ ] Integração com Zotero para gestão de referências
