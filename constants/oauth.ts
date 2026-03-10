@@ -1,3 +1,4 @@
+import * as Constants from "expo-constants";
 import * as Linking from "expo-linking";
 import * as ReactNative from "react-native";
 
@@ -24,6 +25,7 @@ export const OWNER_OPEN_ID = env.ownerId;
 export const OWNER_NAME = env.ownerName;
 export const API_BASE_URL = env.apiBaseUrl;
 
+
 /**
  * Get the API base URL, deriving from current hostname if not set.
  * Metro runs on 8081, API server runs on 3000.
@@ -36,16 +38,36 @@ export function getApiBaseUrl(): string {
   }
 
   // On web, derive from current hostname by replacing port 8081 with 3000
-  if (ReactNative.Platform.OS === "web" && typeof window !== "undefined" && window.location) {
-    const { protocol, hostname } = window.location;
-    // Pattern: 8081-sandboxid.region.domain -> 3000-sandboxid.region.domain
-    const apiHostname = hostname.replace(/^8081-/, "3000-");
-    if (apiHostname !== hostname) {
-      return `${protocol}//${apiHostname}`;
+  if (ReactNative.Platform.OS === "web") {
+    if (typeof window !== "undefined" && window.location) {
+      const { protocol, hostname } = window.location;
+      // Pattern: 8081-sandboxid.region.domain -> 3000-sandboxid.region.domain
+      const apiHostname = hostname.replace(/^8081-/, "3000-");
+      if (apiHostname !== hostname) {
+        return `${protocol}//${apiHostname}`;
+      }
     }
+    // Fallback to empty for relative URLs on web
+    return "";
   }
 
-  // Fallback to empty (will use relative URL)
+  // On native platforms, we MUST use an absolute URL
+  // In development, derive host IP from Expo's hostUri
+  if (__DEV__) {
+    const debuggerHost = Constants.default.expoConfig?.hostUri;
+    const localhost = debuggerHost?.split(":")[0];
+
+    if (localhost) {
+      return `http://${localhost}:3000`;
+    }
+
+    // Fallbacks for simulators
+    return ReactNative.Platform.OS === "android"
+      ? "http://10.0.2.2:3000" // Android emulator loopback
+      : "http://localhost:3000"; // iOS simulator loopback
+  }
+
+  // Production fallback (should ideally be set via EXPO_PUBLIC_API_BASE_URL)
   return "";
 }
 
