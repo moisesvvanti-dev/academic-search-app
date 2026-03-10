@@ -37,3 +37,7 @@
 - [ ] Sincronização em nuvem de histórico e favoritos
 - [ ] Modo offline com cache inteligente de resultados populares
 - [ ] Integração com Zotero para gestão de referências
+
+
+## Bugs Corrigidos
+- [x] Erro de build R8: classes faltando em expo-contacts e expo-sharing — CORRIGIDO: adicionadas regras de keep no ProGuard

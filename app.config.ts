@@ -122,6 +122,7 @@ const config: ExpoConfig = {
           kotlinVersion: "2.0.21",
           enableProguardInReleaseBuilds: true,
           enableShrinkResourcesInReleaseBuilds: true,
+          proguardRulesPath: "./android/app/proguard-rules.pro",
         },
       },
     ],
