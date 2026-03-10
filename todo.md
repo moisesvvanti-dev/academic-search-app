@@ -6,18 +6,13 @@
 - [x] Configurar 5 abas no tab bar
 - [x] Mapear ícones no icon-symbol.tsx
 
-## Busca Universal (Melhorado)
-- [x] Integrar Wikipedia (enciclopédia)
-- [x] Integrar Open Library (livros)
-- [x] Integrar Wikidata (dados estruturados)
-- [x] Integrar arXiv (pré-prints científicos)
-- [x] Integrar Project Gutenberg (livros públicos)
-- [x] Integrar DuckDuckGo (busca geral)
-- [x] Remover filtros científicos restritivos
-- [x] Retornar TODOS os resultados encontrados
-- [x] Modal de detalhe com links clicáveis
-- [x] Sugestões de busca na tela inicial
-- [x] Cache offline com TTL de 10 min
+## Busca com DuckDuckGo (v1.3)
+- [x] Instalar biblioteca duckduckgo-search
+- [x] Criar router backend com duckduckgo-search
+- [x] Implementar busca web, news e images
+- [x] Implementar busca combinada (web + news + images)
+- [x] Integrar no frontend com cache offline
+- [x] Atualizar tela de busca para usar DuckDuckGo
 
 ## Tabelas Numéricas
 - [x] Tela de tabelas com seletor de base
@@ -51,6 +46,7 @@
 ## Bugs Corrigidos
 - [x] Busca acadêmica retorna "nada encontrado" — CORRIGIDO na v1.1
 - [x] Busca universal implementada — v1.2
+- [x] Integração com duckduckgo-search — v1.3
 
 ## Testes
 - [x] 23 testes de calculadora (PASSANDO)

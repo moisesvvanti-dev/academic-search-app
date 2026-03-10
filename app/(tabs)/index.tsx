@@ -17,7 +17,7 @@ import {
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
-import { universalSearch, SearchResult } from "@/lib/universal-search";
+import { combinedSearch, SearchResult } from "@/lib/duckduckgo-search-service";
 import { useHistory } from "@/lib/history-context";
 
 export default function SearchScreen() {
@@ -39,7 +39,7 @@ export default function SearchScreen() {
     setSearched(true);
 
     try {
-      const papers = await universalSearch(query.trim());
+      const papers = await combinedSearch(query.trim());
       setResults(papers);
 
       addSearchHistory({
@@ -61,16 +61,12 @@ export default function SearchScreen() {
 
   const getSourceColor = (source: string) => {
     switch (source) {
-      case "Wikipedia":
-        return "#3366CC";
-      case "arXiv":
-        return "#B31B1B";
-      case "Open Library":
-        return "#6A1B9A";
-      case "Project Gutenberg":
-        return "#1B5E20";
-      case "Wikidata":
-        return "#F57C00";
+      case "DuckDuckGo Web":
+        return "#DE5833";
+      case "DuckDuckGo News":
+        return "#1E90FF";
+      case "DuckDuckGo Images":
+        return "#FF6B6B";
       default:
         return colors.primary;
     }
@@ -84,7 +80,6 @@ export default function SearchScreen() {
     >
       {item.image && (
         <View style={styles.cardImage}>
-          {/* Placeholder para imagem */}
           <View style={[styles.imagePlaceholder, { backgroundColor: colors.primary + "20" }]}>
             <IconSymbol name="doc.fill" size={24} color={colors.primary} />
           </View>
@@ -111,12 +106,6 @@ export default function SearchScreen() {
         <Text style={[styles.cardTitle, { color: colors.foreground }]} numberOfLines={2}>
           {item.title}
         </Text>
-
-        {item.author && (
-          <Text style={[styles.authorText, { color: colors.muted }]} numberOfLines={1}>
-            {item.author}
-          </Text>
-        )}
 
         <Text style={[styles.descriptionText, { color: colors.muted }]} numberOfLines={2}>
           {item.description}
@@ -194,7 +183,7 @@ export default function SearchScreen() {
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.muted }]}>
-            Buscando em Wikipedia, arXiv, livros, e mais...
+            Buscando na internet com DuckDuckGo...
           </Text>
         </View>
       ) : searched && results.length === 0 ? (
@@ -210,7 +199,7 @@ export default function SearchScreen() {
           <IconSymbol name="globe" size={64} color={colors.primary + "60"} />
           <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Busque qualquer coisa</Text>
           <Text style={[styles.emptyText, { color: colors.muted }]}>
-            Pesquise em Wikipedia, livros, artigos científicos, e muito mais.
+            Pesquise em toda a internet com DuckDuckGo.
           </Text>
           <View style={styles.suggestionsRow}>
             {["Python", "História do Brasil", "Astronomia", "Receitas"].map((s) => (
@@ -279,16 +268,6 @@ export default function SearchScreen() {
                     <Text style={[styles.dateText, { color: colors.muted }]}>{selectedResult.date}</Text>
                   )}
                 </View>
-
-                {/* Author */}
-                {selectedResult.author && (
-                  <View style={styles.detailSection}>
-                    <Text style={[styles.detailSectionTitle, { color: colors.primary }]}>Autor</Text>
-                    <Text style={[styles.detailText, { color: colors.foreground }]}>
-                      {selectedResult.author}
-                    </Text>
-                  </View>
-                )}
 
                 {/* Description */}
                 <View style={styles.detailSection}>
@@ -463,10 +442,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     lineHeight: 19,
   },
-  authorText: {
-    fontSize: 12,
-    lineHeight: 17,
-  },
   descriptionText: {
     fontSize: 12,
     lineHeight: 17,
@@ -527,10 +502,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginBottom: 4,
     textTransform: "uppercase",
-  },
-  detailText: {
-    fontSize: 14,
-    lineHeight: 20,
   },
   detailTextLarge: {
     fontSize: 15,
