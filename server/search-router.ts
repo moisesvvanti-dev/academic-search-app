@@ -1,9 +1,11 @@
 import { z } from "zod";
 import { publicProcedure, router } from "./_core/trpc";
-import { search as duckDuckGoSearch, searchNews, searchImages } from "duckduckgo-search";
-
 // @ts-ignore
-const duckDuckGoSearchTyped = duckDuckGoSearch;
+import duckDuckGoSearchModule from "duckduckgo-search";
+
+const duckDuckGoSearch = duckDuckGoSearchModule.search || duckDuckGoSearchModule;
+const searchNews = duckDuckGoSearchModule.searchNews;
+const searchImages = duckDuckGoSearchModule.searchImages;
 
 export interface SearchResult {
   id: string;
