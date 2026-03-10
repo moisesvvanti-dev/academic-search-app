@@ -1,11 +1,30 @@
 import { z } from "zod";
 import { publicProcedure, router } from "./_core/trpc";
-// @ts-ignore
-import duckDuckGoSearchModule from "duckduckgo-search";
+import * as ddg from "duckduckgo-search";
 
-const duckDuckGoSearch = duckDuckGoSearchModule.search || duckDuckGoSearchModule;
-const searchNews = duckDuckGoSearchModule.searchNews;
-const searchImages = duckDuckGoSearchModule.searchImages;
+// Workaround for duckduckgo-search internal bug: this.logger.warning is not a function
+if (typeof console !== 'undefined' && !(console as any).warning) {
+  (console as any).warning = console.warn;
+}
+
+const defaultExport = ddg as any;
+const searchApi = defaultExport.default || defaultExport;
+
+async function fetchGenerator(genPromise: any, limit: number) {
+  const results = [];
+  try {
+    const gen = await genPromise;
+    if (!gen) return [];
+    // DuckDuckGo Search API returns an AsyncGenerator in v1.x
+    for await (const item of gen) {
+      results.push(item);
+      if (results.length >= limit) break;
+    }
+  } catch (error) {
+    console.warn("鸭DuckDuckGo search error:", error);
+  }
+  return results;
+}
 
 export interface SearchResult {
   id: string;
@@ -32,16 +51,16 @@ export const searchRouter = router({
         const { query, limit, type } = input;
 
         if (type === "news") {
-          const results = await searchNews(query, {
-            max_results: limit,
+          const gen = searchApi.text(query + " news", {
             region: "pt-br",
           });
+          const results = await fetchGenerator(gen, limit);
 
-          return (results || []).map((item: any, idx: number) => ({
+          return results.map((item: any, idx: number) => ({
             id: `news_${idx}`,
             title: item.title || "",
             description: item.body || item.description || "",
-            url: item.url || "",
+            url: item.href || item.url || "",
             source: "DuckDuckGo News",
             image: item.image,
             date: item.date,
@@ -50,11 +69,12 @@ export const searchRouter = router({
         }
 
         if (type === "images") {
-          const results = await searchImages(query, {
-            max_results: limit,
+          const gen = searchApi.images(query, {
+            region: "pt-br",
           });
+          const results = await fetchGenerator(gen, limit);
 
-          return (results || []).map((item: any, idx: number) => ({
+          return results.map((item: any, idx: number) => ({
             id: `image_${idx}`,
             title: item.title || query,
             description: item.source || "Imagem",
@@ -66,14 +86,13 @@ export const searchRouter = router({
         }
 
         // Default: web search
-        const results = await duckDuckGoSearch(query, {
-          max_results: limit,
+        const gen = searchApi.text(query, {
           region: "pt-br",
-          safesearch: "moderate",
           time: "y", // last year
         });
+        const results = await fetchGenerator(gen, limit);
 
-        return (results || []).map((item: any, idx: number) => ({
+        return results.map((item: any, idx: number) => ({
           id: `web_${idx}`,
           title: item.title || "",
           description: item.body || item.description || "",
@@ -99,19 +118,16 @@ export const searchRouter = router({
         const { query, limit } = input;
 
         const [webResults, newsResults, imageResults] = await Promise.all([
-          duckDuckGoSearch(query, {
-            max_results: Math.ceil(limit * 0.5),
+          fetchGenerator(searchApi.text(query, {
             region: "pt-br",
-            safesearch: "moderate",
             time: "y",
-          }).catch(() => []),
-          searchNews(query, {
-            max_results: Math.ceil(limit * 0.3),
+          }), Math.ceil(limit * 0.5)),
+          fetchGenerator(searchApi.text(query + " news", {
             region: "pt-br",
-          }).catch(() => []),
-          searchImages(query, {
-            max_results: Math.ceil(limit * 0.2),
-          }).catch(() => []),
+          }), Math.ceil(limit * 0.3)),
+          fetchGenerator(searchApi.images(query, {
+            region: "pt-br",
+          }), Math.ceil(limit * 0.2)),
         ]);
 
         const combined: SearchResult[] = [];
