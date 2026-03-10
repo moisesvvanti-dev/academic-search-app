@@ -1,0 +1,347 @@
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  Alert,
+} from "react-native";
+import { ScreenContainer } from "@/components/screen-container";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useColors } from "@/hooks/use-colors";
+import { useHistory, SearchHistoryItem, CalcHistoryItem } from "@/lib/history-context";
+
+type Tab = "search" | "calc";
+
+function formatDate(timestamp: number): string {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return "Agora mesmo";
+  if (diffMins < 60) return `${diffMins} min atrás`;
+  if (diffHours < 24) return `${diffHours}h atrás`;
+  if (diffDays < 7) return `${diffDays} dia${diffDays > 1 ? "s" : ""} atrás`;
+
+  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+export default function HistoryScreen() {
+  const colors = useColors();
+  const { searchHistory, calcHistory, clearSearchHistory, clearCalcHistory, clearAll } = useHistory();
+  const [activeTab, setActiveTab] = useState<Tab>("search");
+
+  const handleClear = () => {
+    Alert.alert(
+      "Limpar Histórico",
+      activeTab === "search"
+        ? "Deseja limpar todo o histórico de buscas?"
+        : "Deseja limpar todo o histórico de cálculos?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Limpar",
+          style: "destructive",
+          onPress: () => {
+            if (activeTab === "search") clearSearchHistory();
+            else clearCalcHistory();
+          },
+        },
+      ]
+    );
+  };
+
+  const handleClearAll = () => {
+    Alert.alert(
+      "Limpar Tudo",
+      "Deseja limpar todo o histórico (buscas e cálculos)?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Limpar Tudo", style: "destructive", onPress: clearAll },
+      ]
+    );
+  };
+
+  const renderSearchItem = ({ item }: { item: SearchHistoryItem }) => (
+    <View style={[styles.historyItem, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <View style={[styles.iconBox, { backgroundColor: colors.primary + "15" }]}>
+        <IconSymbol name="magnifyingglass" size={18} color={colors.primary} />
+      </View>
+      <View style={styles.itemContent}>
+        <Text style={[styles.itemTitle, { color: colors.foreground }]} numberOfLines={2}>
+          {item.query}
+        </Text>
+        <View style={styles.itemMeta}>
+          <Text style={[styles.itemMetaText, { color: colors.muted }]}>
+            {item.resultsCount} resultado{item.resultsCount !== 1 ? "s" : ""}
+          </Text>
+          {item.filters?.area && item.filters.area !== "Todas" && (
+            <View style={[styles.filterTag, { backgroundColor: colors.primary + "15" }]}>
+              <Text style={[styles.filterTagText, { color: colors.primary }]}>{item.filters.area}</Text>
+            </View>
+          )}
+        </View>
+        <Text style={[styles.itemDate, { color: colors.muted }]}>{formatDate(item.timestamp)}</Text>
+      </View>
+    </View>
+  );
+
+  const renderCalcItem = ({ item }: { item: CalcHistoryItem }) => (
+    <View style={[styles.historyItem, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <View style={[styles.iconBox, { backgroundColor: "#6A1B9A15" }]}>
+        <IconSymbol name="function" size={18} color="#6A1B9A" />
+      </View>
+      <View style={styles.itemContent}>
+        <Text style={[styles.itemExpression, { color: colors.foreground }]} numberOfLines={1}>
+          {item.expression}
+        </Text>
+        <Text style={[styles.itemResult, { color: colors.primary }]}>= {item.result}</Text>
+        <Text style={[styles.itemDate, { color: colors.muted }]}>{formatDate(item.timestamp)}</Text>
+      </View>
+    </View>
+  );
+
+  const currentData = activeTab === "search" ? searchHistory : calcHistory;
+  const isEmpty = currentData.length === 0;
+
+  return (
+    <ScreenContainer>
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <View style={styles.headerRow}>
+          <View style={styles.headerLeft}>
+            <IconSymbol name="clock" size={24} color={colors.primary} />
+            <Text style={[styles.headerTitle, { color: colors.foreground }]}>Histórico</Text>
+          </View>
+          <View style={styles.headerActions}>
+            {!isEmpty && (
+              <TouchableOpacity
+                style={[styles.clearBtn, { borderColor: colors.error + "50" }]}
+                onPress={handleClear}
+              >
+                <IconSymbol name="trash" size={14} color={colors.error} />
+                <Text style={[styles.clearBtnText, { color: colors.error }]}>Limpar</Text>
+              </TouchableOpacity>
+            )}
+            {(searchHistory.length > 0 || calcHistory.length > 0) && (
+              <TouchableOpacity
+                style={[styles.clearAllBtn, { backgroundColor: colors.error + "15" }]}
+                onPress={handleClearAll}
+              >
+                <Text style={[styles.clearAllText, { color: colors.error }]}>Limpar Tudo</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* Tabs */}
+        <View style={[styles.tabRow, { backgroundColor: colors.background, borderColor: colors.border }]}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === "search" && { backgroundColor: colors.primary }]}
+            onPress={() => setActiveTab("search")}
+          >
+            <IconSymbol name="magnifyingglass" size={14} color={activeTab === "search" ? "#fff" : colors.muted} />
+            <Text style={[styles.tabText, { color: activeTab === "search" ? "#fff" : colors.muted }]}>
+              Buscas ({searchHistory.length})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === "calc" && { backgroundColor: "#6A1B9A" }]}
+            onPress={() => setActiveTab("calc")}
+          >
+            <IconSymbol name="function" size={14} color={activeTab === "calc" ? "#fff" : colors.muted} />
+            <Text style={[styles.tabText, { color: activeTab === "calc" ? "#fff" : colors.muted }]}>
+              Cálculos ({calcHistory.length})
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Content */}
+      {isEmpty ? (
+        <View style={styles.emptyState}>
+          <IconSymbol
+            name={activeTab === "search" ? "magnifyingglass" : "function"}
+            size={56}
+            color={colors.primary + "40"}
+          />
+          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
+            {activeTab === "search" ? "Nenhuma busca ainda" : "Nenhum cálculo ainda"}
+          </Text>
+          <Text style={[styles.emptyText, { color: colors.muted }]}>
+            {activeTab === "search"
+              ? "Suas pesquisas acadêmicas aparecerão aqui."
+              : "Seus cálculos científicos aparecerão aqui."}
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={currentData as (SearchHistoryItem | CalcHistoryItem)[]}
+          keyExtractor={(item) => item.id}
+          renderItem={activeTab === "search"
+            ? (props) => renderSearchItem(props as { item: SearchHistoryItem })
+            : (props) => renderCalcItem(props as { item: CalcHistoryItem })
+          }
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <Text style={[styles.listHeader, { color: colors.muted }]}>
+              {currentData.length} {activeTab === "search" ? "busca" : "cálculo"}{currentData.length !== 1 ? "s" : ""} recente{currentData.length !== 1 ? "s" : ""}
+            </Text>
+          }
+        />
+      )}
+    </ScreenContainer>
+  );
+}
+
+const styles = StyleSheet.create({
+  header: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  headerActions: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+  },
+  clearBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  clearBtnText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  clearAllBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  clearAllText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  tabRow: {
+    flexDirection: "row",
+    borderRadius: 10,
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+  tab: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 8,
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  listContent: {
+    padding: 16,
+    gap: 10,
+  },
+  listHeader: {
+    fontSize: 13,
+    marginBottom: 8,
+  },
+  historyItem: {
+    flexDirection: "row",
+    gap: 12,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 10,
+  },
+  iconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  itemContent: {
+    flex: 1,
+    gap: 3,
+  },
+  itemTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    lineHeight: 20,
+  },
+  itemExpression: {
+    fontSize: 15,
+    fontWeight: "600",
+    fontFamily: "monospace",
+  },
+  itemResult: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  itemMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  itemMetaText: {
+    fontSize: 12,
+  },
+  filterTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  filterTagText: {
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  itemDate: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    paddingHorizontal: 32,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  emptyText: {
+    fontSize: 14,
+    textAlign: "center",
+    lineHeight: 20,
+  },
+});
