@@ -49,3 +49,7 @@
 - [x] Modo offline com cache inteligente (cache em memória com TTL de 10 min)
 - [x] Sugestões de busca na tela inicial
 - [x] Testes unitários (23 testes passando)
+
+
+## Bugs Reportados
+- [x] Busca acadêmica retorna "nada encontrado" mesmo com termos válidos — CORRIGIDO: filtragem de relevância menos restritiva, melhor tratamento de erros, logs de debug
