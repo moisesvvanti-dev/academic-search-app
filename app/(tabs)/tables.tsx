@@ -11,6 +11,7 @@ import {
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
+import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown, FadeInUp, ZoomIn } from "react-native-reanimated";
 
 type Base = "binary" | "octal" | "decimal" | "hexadecimal";
@@ -124,8 +125,10 @@ export default function TablesScreen() {
           </View>
         </View>
       </Animated.View>
-    );
-  };  return (
+  );
+  };
+
+  return (
     <ScreenContainer scrollable={false}>
       {/* Header */}
       <Animated.View entering={FadeInDown.duration(800)}>
@@ -201,7 +204,7 @@ export default function TablesScreen() {
             </TouchableOpacity>
           </View>
         </View>
-      </Animated.View> </View>
+      </Animated.View>
 
       {/* Table */}
       {viewMode === "all" ? (

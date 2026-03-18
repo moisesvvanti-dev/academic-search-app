@@ -12,6 +12,8 @@ import {
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
+import { Ionicons } from "@expo/vector-icons";
+import Animated, { FadeInDown, FadeInUp, ZoomIn, Layout } from "react-native-reanimated";
 import { calculate, CalcStep } from "@/lib/calculator-engine";
 import { useHistory } from "@/lib/history-context";
 
@@ -141,64 +143,85 @@ export default function CalculatorScreen() {
   };
 
   return (
-    <ScreenContainer scrollable>
+    <ScreenContainer scrollable={false}>
       {/* Header */}
-      <View className="px-6 py-6 flex-row items-center justify-between border-b" style={{ borderColor: colors.border }}>
-        <View>
-          <Text className="text-2xl font-bold tracking-tight" style={{ color: colors.foreground }}>
-            Cálculos
-          </Text>
-          <Text className="text-xs uppercase font-bold tracking-widest mt-1" style={{ color: colors.muted }}>
-            Motor científico de alta precisão
-          </Text>
+      <Animated.View entering={FadeInDown.duration(800)}>
+        <View className="px-8 py-8 flex-row items-center justify-between border-b-2" style={{ borderColor: colors.border + '30' }}>
+          <View>
+            <Text className="text-4xl font-black tracking-tighter" style={{ color: colors.foreground }}>
+              Nexus<Text style={{ color: colors.primary }}>Compute</Text>
+            </Text>
+            <Text className="text-[10px] uppercase font-black tracking-[4px] mt-2 opacity-60" style={{ color: colors.foreground }}>
+              Precision Intelligence Engine
+            </Text>
+          </View>
+          {steps.length > 0 && (
+            <TouchableOpacity
+              className="w-14 h-14 rounded-2xl border-2 items-center justify-center glass-extreme-dark shadow-2xl"
+              style={{ borderColor: colors.primary + "40" }}
+              onPress={() => setShowSteps(true)}
+            >
+              <Ionicons name="analytics" size={24} color={colors.primary} />
+            </TouchableOpacity>
+          )}
         </View>
-        {steps.length > 0 && (
-          <TouchableOpacity
-            className="p-3 rounded-2xl border"
-            style={{ backgroundColor: colors.surface, borderColor: colors.primary + "40" }}
-            onPress={() => setShowSteps(true)}
-          >
-            <Ionicons name="list" size={20} color={colors.primary} />
-          </TouchableOpacity>
-        )}
-      </View>
+      </Animated.View>
 
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {/* Display */}
-        <View style={[styles.display, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.expressionText, { color: colors.muted }]} numberOfLines={2} adjustsFontSizeToFit>
-            {expression || "0"}
-          </Text>
-          {error ? (
-            <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
-          ) : result ? (
-            <Text style={[styles.resultText, { color: colors.primary }]}>= {result}</Text>
-          ) : null}
-        </View>
+        <Animated.View entering={FadeInDown.delay(200).duration(800)}>
+          <View 
+            className="m-6 p-10 rounded-[40px] glass-extreme border-2 shadow-2xl justify-end min-h-[160px]"
+            style={{ borderColor: colors.primary + '20' }}
+          >
+            <Text 
+              className="text-right font-black mb-4 opacity-40 uppercase tracking-[2px] text-[10px]"
+              style={{ color: colors.foreground }}
+            >
+              Expressão Ativa
+            </Text>
+            <Text 
+              className="text-right text-3xl font-black tracking-tight"
+              style={{ color: colors.foreground, fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace" }} 
+              numberOfLines={2} 
+              adjustsFontSizeToFit
+            >
+              {expression || "0"}
+            </Text>
+            <View className="mt-6 pt-6 border-t border-primary/10" style={{ borderTopColor: colors.primary + '10' }}>
+              {error ? (
+                <Text className="text-right font-bold text-sm" style={{ color: colors.error }}>{error}</Text>
+              ) : result ? (
+                <Text className="text-right text-5xl font-black" style={{ color: colors.primary }}>= {result}</Text>
+              ) : (
+                <Text className="text-right font-bold opacity-20" style={{ color: colors.foreground }}>Aguardando entrada...</Text>
+              )}
+            </View>
+          </View>
+        </Animated.View>
 
         {/* Keyboard */}
-        <View className="px-4 pb-8 gap-3">
+        <Animated.View entering={FadeInUp.delay(400).duration(1000)} className="px-6 pb-12 gap-4">
           {BUTTONS.map((row, rowIdx) => (
-            <View key={rowIdx} className="flex-row gap-3">
+            <View key={rowIdx} className="flex-row gap-4">
               {row.map((btn) => (
                 <TouchableOpacity
                   key={btn.label}
-                  className={`flex-1 py-5 rounded-3xl border items-center justify-center ${btn.wide ? 'flex-[2]' : ''}`}
+                  className={`flex-1 py-8 rounded-[32px] border-2 items-center justify-center shadow-2xl ${btn.wide ? 'flex-[2]' : ''}`}
                   style={[
                     getButtonStyle(btn),
                     {
-                      shadowColor: "#000",
-                      shadowOffset: { width: 0, height: 2 },
+                      borderColor: (getButtonStyle(btn) as any).borderColor || colors.border,
+                      shadowColor: (getButtonStyle(btn) as any).backgroundColor,
                       shadowOpacity: 0.1,
-                      shadowRadius: 4,
-                      elevation: 1
+                      shadowRadius: 10,
                     }
                   ]}
                   onPress={() => handleButton(btn)}
-                  activeOpacity={0.6}
+                  activeOpacity={0.4}
                 >
                   <Text 
-                    className="text-lg font-bold" 
+                    className="text-xl font-black uppercase tracking-widest" 
                     style={{ color: getButtonTextColor(btn) }}
                   >
                     {btn.label}
@@ -207,7 +230,7 @@ export default function CalculatorScreen() {
               ))}
             </View>
           ))}
-        </View>
+        </Animated.View>
 
         {/* Quick Reference */}
         <View style={[styles.reference, { backgroundColor: colors.surface, borderColor: colors.border }]}>
