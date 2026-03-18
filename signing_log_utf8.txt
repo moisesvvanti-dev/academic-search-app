@@ -1,0 +1,33 @@
+﻿source:
+	C:\Users\moises_vanti\Desktop\atividade
+binary-lib/windows-33_0_2/libwinpthread-1.dll
+C:\Users\MOISES~1\AppData\Local\Temp\uapksigner-14951865149400027489
+zipalign location: BUILT_IN 
+	C:\Users\MOISES~1\AppData\Local\Temp\uapksigner-14951865149400027489\win-zipalign_33_0_2.exe9462370893918456357.tmp
+keystore:
+	[0] 161a0018 C:\Users\moises_vanti\AppData\Local\Temp\temp_9536195536421104727_debug.keystore (DEBUG_EMBEDDED)
+
+01. app-release.apk
+java : 	- already 
+signed SKIP
+No linha:1 caractere:1
++ java -jar "c:\Users\m
+oises_vanti\Desktop\ati
+vidade\uber-apk-signer.
+ja ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (	- already si   
+ gned SKIP:String)     
+[], RemoteExceptio    n
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+
+[Tue Mar 17 20:53:36 GMT-03:00 2026][v1.3.0]
+Successfully processed 0 APKs and 1 errors in 0.15 seconds.

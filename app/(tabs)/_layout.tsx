@@ -5,6 +5,7 @@ import { Platform } from "react-native";
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function TabLayout() {
   const colors = useColors();
@@ -66,6 +67,15 @@ export default function TabLayout() {
         options={{
           title: "Histórico",
           tabBarIcon: ({ color }) => <IconSymbol size={26} name="clock" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="studies"
+        options={{
+          title: "Estudos",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "book" : "book-outline"} size={24} color={color} />
+          ),
         }}
       />
     </Tabs>

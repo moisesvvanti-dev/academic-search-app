@@ -6,10 +6,12 @@ import {
   FlatList,
   StyleSheet,
   ScrollView,
+  TextInput,
 } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
+import Animated, { FadeInDown, FadeInUp, ZoomIn } from "react-native-reanimated";
 
 type Base = "binary" | "octal" | "decimal" | "hexadecimal";
 
@@ -55,26 +57,52 @@ export default function TablesScreen() {
   const colors = useColors();
   const [selectedBase, setSelectedBase] = useState<Base>("decimal");
   const [viewMode, setViewMode] = useState<"all" | "single">("all");
+  const [startNumber, setStartNumber] = useState(0);
+  const [inputVal, setInputVal] = useState("0");
+
+  const tableData = useMemo(() => {
+    const start = parseInt(inputVal) || 0;
+    return Array.from({ length: 51 }, (_, i) => {
+      const val = start + i;
+      return {
+        decimal: val,
+        binary: toBase(val, "binary"),
+        octal: toBase(val, "octal"),
+        hexadecimal: toBase(val, "hexadecimal"),
+      };
+    });
+  }, [inputVal]);
 
   const selectedConfig = BASE_CONFIGS.find((b) => b.key === selectedBase)!;
 
   const renderAllColumns = ({ item, index }: { item: TableRow; index: number }) => {
     const isEven = index % 2 === 0;
     return (
-      <View style={[styles.tableRow, { backgroundColor: isEven ? colors.surface : colors.background }]}>
-        <Text style={[styles.cellDec, { color: colors.foreground, fontWeight: "700" }]}>
-          {item.decimal}
-        </Text>
-        <Text style={[styles.cellBin, { color: "#1565C0", fontFamily: "monospace" }]}>
-          {item.binary}
-        </Text>
-        <Text style={[styles.cellOct, { color: "#6A1B9A", fontFamily: "monospace" }]}>
-          {item.octal}
-        </Text>
-        <Text style={[styles.cellHex, { color: "#B71C1C", fontFamily: "monospace" }]}>
-          {item.hexadecimal}
-        </Text>
-      </View>
+      <Animated.View entering={FadeInDown.delay(index * 20).duration(400)}>
+        <View 
+          style={[
+            styles.tableRow, 
+            { 
+              backgroundColor: isEven ? colors.surface + '40' : 'transparent',
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border + '20'
+            }
+          ]}
+        >
+          <Text style={[styles.cellDec, { color: colors.foreground, fontWeight: "900" }]}>
+            {item.decimal}
+          </Text>
+          <Text style={[styles.cellBin, { color: colors.primary, fontFamily: "monospace", fontWeight: 'bold' }]}>
+            {item.binary}
+          </Text>
+          <Text style={[styles.cellOct, { color: colors.accent, fontFamily: "monospace", fontWeight: 'bold' }]}>
+            {item.octal}
+          </Text>
+          <Text style={[styles.cellHex, { color: colors.error, fontFamily: "monospace", fontWeight: '900' }]}>
+            {item.hexadecimal}
+          </Text>
+        </View>
+      </Animated.View>
     );
   };
 
@@ -82,75 +110,98 @@ export default function TablesScreen() {
     const isEven = index % 2 === 0;
     const value = selectedBase === "decimal" ? item.decimal.toString() : toBase(item.decimal, selectedBase);
     return (
-      <View style={[styles.singleRow, { backgroundColor: isEven ? colors.surface : colors.background }]}>
-        <Text style={[styles.singleDecimal, { color: colors.muted }]}>{item.decimal}</Text>
-        <View style={styles.singleArrow}>
-          <Text style={{ color: colors.muted }}>→</Text>
+      <Animated.View entering={FadeInUp.delay(index * 20).duration(400)}>
+        <View style={[styles.singleRow, { backgroundColor: isEven ? colors.surface + '40' : 'transparent' }]}>
+          <Text style={[styles.singleDecimal, { color: colors.muted }]}>{item.decimal}</Text>
+          <View className="mx-6">
+            <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+          </View>
+          <Text style={[styles.singleValue, { color: selectedConfig.color, fontSize: 22 }]}>
+            {value}
+          </Text>
+          <View className="px-3 py-1 rounded-lg glass-extreme-dark">
+            <Text style={[styles.singleLabel, { color: colors.foreground, width: 'auto' }]}>{selectedConfig.shortLabel}</Text>
+          </View>
         </View>
-        <Text style={[styles.singleValue, { color: selectedConfig.color }]}>
-          {value}
-        </Text>
-        <Text style={[styles.singleLabel, { color: colors.muted }]}>{selectedConfig.shortLabel}</Text>
-      </View>
+      </Animated.View>
     );
-  };
-
-  return (
-    <ScreenContainer>
+  };  return (
+    <ScreenContainer scrollable={false}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <View style={styles.headerTop}>
-          <IconSymbol name="number" size={24} color={colors.primary} />
-          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Tabelas Numéricas</Text>
-        </View>
-        <Text style={[styles.headerSub, { color: colors.muted }]}>
-          Conversão de 0 a 50 em todas as bases
-        </Text>
-
-        {/* Base Selector */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.baseSelectorScroll}>
-          {BASE_CONFIGS.map((config) => (
-            <TouchableOpacity
-              key={config.key}
-              style={[
-                styles.baseChip,
-                {
-                  backgroundColor: selectedBase === config.key ? config.color : colors.background,
-                  borderColor: config.color,
-                },
-              ]}
-              onPress={() => setSelectedBase(config.key)}
-            >
-              <Text style={[styles.baseChipLabel, { color: selectedBase === config.key ? "#fff" : config.color }]}>
-                {config.shortLabel}
+      <Animated.View entering={FadeInDown.duration(800)}>
+        <View style={[styles.header, { backgroundColor: 'transparent', borderBottomColor: colors.border + '40' }]}>
+          <View className="flex-row items-center gap-4 mb-4">
+            <View className="p-3 rounded-2xl glass-extreme shadow-lg">
+              <Ionicons name="grid-outline" size={28} color={colors.primary} />
+            </View>
+            <View>
+              <Text className="text-3xl font-black tracking-tighter" style={{ color: colors.foreground }}>Matrizes Numéricas</Text>
+              <Text className="text-xs font-bold opacity-60 uppercase tracking-[2px]" style={{ color: colors.foreground }}>
+                Sistemas de Conversão Computacional
               </Text>
-              <Text style={[styles.baseChipDesc, { color: selectedBase === config.key ? "#ffffff99" : colors.muted }]}>
-                {config.description}
+            </View>
+          </View>
+
+          <Animated.View entering={FadeInDown.delay(200)} className="mb-6 flex-row items-center gap-4 p-4 rounded-3xl glass-extreme border" style={{ borderColor: colors.border }}>
+            <Text style={{ color: colors.foreground, fontSize: 13, fontWeight: '900', textTransform: 'uppercase' }}>Offset:</Text>
+            <TextInput
+              className="flex-1 bg-surface/50 rounded-2xl px-6 py-3 text-lg font-black"
+              style={{ 
+                backgroundColor: colors.surface + '80',
+                color: colors.foreground
+              }}
+              keyboardType="numeric"
+              value={inputVal}
+              onChangeText={setInputVal}
+              placeholder="0"
+              placeholderTextColor={colors.muted}
+            />
+          </Animated.View>
+
+          {/* Base Selector */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-6">
+            <View className="flex-row gap-3">
+              {BASE_CONFIGS.map((config) => (
+                <TouchableOpacity
+                  key={config.key}
+                  className="px-6 py-4 rounded-[20px] border-2 items-center min-w-[100px]"
+                  style={{
+                    backgroundColor: selectedBase === config.key ? config.color : colors.surface + '60',
+                    borderColor: selectedBase === config.key ? config.color : colors.border,
+                  }}
+                  onPress={() => setSelectedBase(config.key)}
+                >
+                  <Text className="font-black text-xs uppercase tracking-widest" style={{ color: selectedBase === config.key ? "#fff" : colors.foreground }}>
+                    {config.shortLabel}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
+
+          {/* View Mode Toggle */}
+          <View className="flex-row rounded-[24px] overflow-hidden glass-extreme-dark p-1 border" style={{ borderColor: colors.border + '20' }}>
+            <TouchableOpacity
+              className="flex-1 py-4 items-center rounded-[20px]"
+              style={[{ backgroundColor: viewMode === "all" ? colors.primary : 'transparent' }]}
+              onPress={() => setViewMode("all")}
+            >
+              <Text className="font-black text-[10px] uppercase tracking-[2px]" style={{ color: viewMode === "all" ? "#fff" : colors.muted }}>
+                Nexus View
               </Text>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* View Mode Toggle */}
-        <View style={[styles.viewToggle, { backgroundColor: colors.background, borderColor: colors.border }]}>
-          <TouchableOpacity
-            style={[styles.toggleBtn, viewMode === "all" && { backgroundColor: colors.primary }]}
-            onPress={() => setViewMode("all")}
-          >
-            <Text style={[styles.toggleText, { color: viewMode === "all" ? "#fff" : colors.muted }]}>
-              Todas as Bases
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.toggleBtn, viewMode === "single" && { backgroundColor: selectedConfig.color }]}
-            onPress={() => setViewMode("single")}
-          >
-            <Text style={[styles.toggleText, { color: viewMode === "single" ? "#fff" : colors.muted }]}>
-              {selectedConfig.label}
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              className="flex-1 py-4 items-center rounded-[20px]"
+              style={[{ backgroundColor: viewMode === "single" ? selectedConfig.color : 'transparent' }]}
+              onPress={() => setViewMode("single")}
+            >
+              <Text className="font-black text-[10px] uppercase tracking-[2px]" style={{ color: viewMode === "single" ? "#fff" : colors.muted }}>
+                Focus: {selectedConfig.shortLabel}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </Animated.View> </View>
 
       {/* Table */}
       {viewMode === "all" ? (
@@ -163,7 +214,7 @@ export default function TablesScreen() {
             <Text style={[styles.headerCellHex, { color: "#fff" }]}>HEX</Text>
           </View>
           <FlatList
-            data={TABLE_DATA}
+            data={tableData}
             keyExtractor={(item) => item.decimal.toString()}
             renderItem={renderAllColumns}
             showsVerticalScrollIndicator={false}
@@ -173,11 +224,13 @@ export default function TablesScreen() {
       ) : (
         <>
           {/* Single Base Header */}
-          <View style={[styles.singleHeader, { backgroundColor: selectedConfig.color }]}>
-            <Text style={styles.singleHeaderText}>Decimal → {selectedConfig.label}</Text>
+          <View className="px-6 py-3 glass-extreme-dark items-center">
+            <Text className="font-black text-xs uppercase tracking-[4px]" style={{ color: selectedConfig.color }}>
+              Decimal → {selectedConfig.label}
+            </Text>
           </View>
           <FlatList
-            data={TABLE_DATA}
+            data={tableData}
             keyExtractor={(item) => item.decimal.toString()}
             renderItem={renderSingleColumn}
             showsVerticalScrollIndicator={false}

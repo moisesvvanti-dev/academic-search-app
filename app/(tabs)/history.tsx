@@ -109,91 +109,114 @@ export default function HistoryScreen() {
   const isEmpty = currentData.length === 0;
 
   return (
-    <ScreenContainer>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <View style={styles.headerRow}>
-          <View style={styles.headerLeft}>
-            <IconSymbol name="clock" size={24} color={colors.primary} />
-            <Text style={[styles.headerTitle, { color: colors.foreground }]}>Histórico</Text>
-          </View>
-          <View style={styles.headerActions}>
-            {!isEmpty && (
-              <TouchableOpacity
-                style={[styles.clearBtn, { borderColor: colors.error + "50" }]}
-                onPress={handleClear}
-              >
-                <IconSymbol name="trash" size={14} color={colors.error} />
-                <Text style={[styles.clearBtnText, { color: colors.error }]}>Limpar</Text>
-              </TouchableOpacity>
-            )}
-            {(searchHistory.length > 0 || calcHistory.length > 0) && (
-              <TouchableOpacity
-                style={[styles.clearAllBtn, { backgroundColor: colors.error + "15" }]}
-                onPress={handleClearAll}
-              >
-                <Text style={[styles.clearAllText, { color: colors.error }]}>Limpar Tudo</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+    <ScreenContainer scrollable className="p-6">
+      <View className="flex-row items-center justify-between mb-8 mt-4">
+        <View>
+          <Text className="text-3xl font-bold tracking-tight" style={{ color: colors.foreground }}>
+            Atividade
+          </Text>
+          <Text className="text-sm mt-1" style={{ color: colors.muted }}>
+            Seu histórico de pesquisas e cálculos
+          </Text>
         </View>
-
-        {/* Tabs */}
-        <View style={[styles.tabRow, { backgroundColor: colors.background, borderColor: colors.border }]}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "search" && { backgroundColor: colors.primary }]}
-            onPress={() => setActiveTab("search")}
-          >
-            <IconSymbol name="magnifyingglass" size={14} color={activeTab === "search" ? "#fff" : colors.muted} />
-            <Text style={[styles.tabText, { color: activeTab === "search" ? "#fff" : colors.muted }]}>
-              Buscas ({searchHistory.length})
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "calc" && { backgroundColor: "#6A1B9A" }]}
-            onPress={() => setActiveTab("calc")}
-          >
-            <IconSymbol name="function" size={14} color={activeTab === "calc" ? "#fff" : colors.muted} />
-            <Text style={[styles.tabText, { color: activeTab === "calc" ? "#fff" : colors.muted }]}>
-              Cálculos ({calcHistory.length})
-            </Text>
-          </TouchableOpacity>
+        <View className="flex-row gap-2">
+          {!isEmpty && (
+            <TouchableOpacity 
+              className="p-3 rounded-2xl border" 
+              style={{ backgroundColor: colors.surface, borderColor: colors.error + '40' }}
+              onPress={handleClear} 
+            >
+              <Ionicons name="trash-outline" size={20} color={colors.error} />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
-      {/* Content */}
-      {isEmpty ? (
-        <View style={styles.emptyState}>
-          <IconSymbol
-            name={activeTab === "search" ? "magnifyingglass" : "function"}
-            size={56}
-            color={colors.primary + "40"}
-          />
-          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
-            {activeTab === "search" ? "Nenhuma busca ainda" : "Nenhum cálculo ainda"}
+      {/* Modern Tabs */}
+      <View 
+        className="flex-row p-1 rounded-2xl mb-8" 
+        style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}
+      >
+        <TouchableOpacity
+          className="flex-1 py-3 items-center rounded-xl flex-row justify-center gap-2"
+          style={activeTab === "search" ? { backgroundColor: colors.primary } : {}}
+          onPress={() => setActiveTab("search")}
+        >
+          <Ionicons name="search" size={16} color={activeTab === "search" ? "#fff" : colors.muted} />
+          <Text className="font-bold text-xs uppercase tracking-widest" style={{ color: activeTab === "search" ? "#fff" : colors.muted }}>
+            Buscas
           </Text>
-          <Text style={[styles.emptyText, { color: colors.muted }]}>
-            {activeTab === "search"
-              ? "Suas pesquisas acadêmicas aparecerão aqui."
-              : "Seus cálculos científicos aparecerão aqui."}
+        </TouchableOpacity>
+        <TouchableOpacity
+          className="flex-1 py-3 items-center rounded-xl flex-row justify-center gap-2"
+          style={activeTab === "calc" ? { backgroundColor: colors.primary } : {}}
+          onPress={() => setActiveTab("calc")}
+        >
+          <Ionicons name="calculator" size={16} color={activeTab === "calc" ? "#fff" : colors.muted} />
+          <Text className="font-bold text-xs uppercase tracking-widest" style={{ color: activeTab === "calc" ? "#fff" : colors.muted }}>
+            Cálculos
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Content Section */}
+      {isEmpty ? (
+        <View className="flex-1 items-center justify-center py-20 opacity-50">
+          <Ionicons 
+            name={activeTab === "search" ? "search-outline" : "calculator-outline"} 
+            size={80} 
+            color={colors.muted} 
+          />
+          <Text className="mt-4 text-center font-medium" style={{ color: colors.muted }}>
+            {activeTab === "search" ? "Nenhuma busca recente." : "Nenhum cálculo recente."}
           </Text>
         </View>
       ) : (
-        <FlatList
-          data={currentData as (SearchHistoryItem | CalcHistoryItem)[]}
-          keyExtractor={(item) => item.id}
-          renderItem={activeTab === "search"
-            ? (props) => renderSearchItem(props as { item: SearchHistoryItem })
-            : (props) => renderCalcItem(props as { item: CalcHistoryItem })
-          }
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          ListHeaderComponent={
-            <Text style={[styles.listHeader, { color: colors.muted }]}>
-              {currentData.length} {activeTab === "search" ? "busca" : "cálculo"}{currentData.length !== 1 ? "s" : ""} recente{currentData.length !== 1 ? "s" : ""}
-            </Text>
-          }
-        />
+        <View className="gap-4">
+          {currentData.map((item: any) => (
+            <View
+              key={item.id}
+              className="p-5 rounded-3xl border"
+              style={{ 
+                borderColor: colors.border, 
+                backgroundColor: colors.surface,
+              }}
+            >
+              <View className="flex-row items-center mb-3">
+                <View 
+                  className="w-10 h-10 rounded-xl items-center justify-center mr-3" 
+                  style={{ backgroundColor: colors.primary + '15' }}
+                >
+                  <Ionicons 
+                    name={activeTab === "search" ? "search" : "calculator"} 
+                    size={18} 
+                    color={colors.primary} 
+                  />
+                </View>
+                <View className="flex-1">
+                  <Text className="font-bold text-sm" style={{ color: colors.foreground }} numberOfLines={1}>
+                    {activeTab === "search" ? item.query : item.expression}
+                  </Text>
+                  <Text className="text-[10px] font-bold uppercase tracking-widest" style={{ color: colors.muted }}>
+                    {formatDate(item.timestamp)}
+                  </Text>
+                </View>
+              </View>
+              {activeTab === "calc" && (
+                <Text className="text-xl font-bold" style={{ color: colors.primary }}>
+                  = {item.result}
+                </Text>
+              )}
+              {activeTab === "search" && (
+                <View className="flex-row items-center">
+                  <Text className="text-xs font-medium" style={{ color: colors.muted }}>
+                    {item.resultsCount} resultados encontrados
+                  </Text>
+                </View>
+              )}
+            </View>
+          ))}
+        </View>
       )}
     </ScreenContainer>
   );

@@ -141,23 +141,26 @@ export default function CalculatorScreen() {
   };
 
   return (
-    <ScreenContainer>
+    <ScreenContainer scrollable>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <View style={styles.headerRow}>
-          <View style={styles.headerLeft}>
-            <IconSymbol name="function" size={24} color={colors.primary} />
-            <Text style={[styles.headerTitle, { color: colors.foreground }]}>Calculadora Científica</Text>
-          </View>
-          {steps.length > 0 && (
-            <TouchableOpacity
-              style={[styles.stepsBtn, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "30" }]}
-              onPress={() => setShowSteps(true)}
-            >
-              <Text style={[styles.stepsBtnText, { color: colors.primary }]}>Passo a Passo</Text>
-            </TouchableOpacity>
-          )}
+      <View className="px-6 py-6 flex-row items-center justify-between border-b" style={{ borderColor: colors.border }}>
+        <View>
+          <Text className="text-2xl font-bold tracking-tight" style={{ color: colors.foreground }}>
+            Cálculos
+          </Text>
+          <Text className="text-xs uppercase font-bold tracking-widest mt-1" style={{ color: colors.muted }}>
+            Motor científico de alta precisão
+          </Text>
         </View>
+        {steps.length > 0 && (
+          <TouchableOpacity
+            className="p-3 rounded-2xl border"
+            style={{ backgroundColor: colors.surface, borderColor: colors.primary + "40" }}
+            onPress={() => setShowSteps(true)}
+          >
+            <Ionicons name="list" size={20} color={colors.primary} />
+          </TouchableOpacity>
+        )}
       </View>
 
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -174,17 +177,30 @@ export default function CalculatorScreen() {
         </View>
 
         {/* Keyboard */}
-        <View style={styles.keyboard}>
+        <View className="px-4 pb-8 gap-3">
           {BUTTONS.map((row, rowIdx) => (
-            <View key={rowIdx} style={styles.row}>
+            <View key={rowIdx} className="flex-row gap-3">
               {row.map((btn) => (
                 <TouchableOpacity
                   key={btn.label}
-                  style={[styles.button, getButtonStyle(btn), btn.wide && styles.wideButton]}
+                  className={`flex-1 py-5 rounded-3xl border items-center justify-center ${btn.wide ? 'flex-[2]' : ''}`}
+                  style={[
+                    getButtonStyle(btn),
+                    {
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.1,
+                      shadowRadius: 4,
+                      elevation: 1
+                    }
+                  ]}
                   onPress={() => handleButton(btn)}
-                  activeOpacity={0.7}
+                  activeOpacity={0.6}
                 >
-                  <Text style={[styles.buttonText, { color: getButtonTextColor(btn) }]}>
+                  <Text 
+                    className="text-lg font-bold" 
+                    style={{ color: getButtonTextColor(btn) }}
+                  >
                     {btn.label}
                   </Text>
                 </TouchableOpacity>

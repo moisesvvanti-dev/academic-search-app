@@ -1,68 +1,103 @@
-import { View, type ViewProps } from "react-native";
-import { SafeAreaView, type Edge } from "react-native-safe-area-context";
+import { View, ViewProps, ScrollView, StyleSheet } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useColors } from "@/hooks/use-colors";
+import { LinearGradient } from "expo-linear-gradient";
+import Animated, { useSharedValue, useAnimatedStyle, useAnimatedProps, withRepeat, withTiming, Easing, withSequence } from 'react-native-reanimated';
+import { useEffect } from "react";
 
-import { cn } from "@/lib/utils";
-
-export interface ScreenContainerProps extends ViewProps {
-  /**
-   * SafeArea edges to apply. Defaults to ["top", "left", "right"].
-   * Bottom is typically handled by Tab Bar.
-   */
-  edges?: Edge[];
-  /**
-   * Tailwind className for the content area.
-   */
-  className?: string;
-  /**
-   * Additional className for the outer container (background layer).
-   */
-  containerClassName?: string;
-  /**
-   * Additional className for the SafeAreaView (content layer).
-   */
-  safeAreaClassName?: string;
+interface ScreenContainerProps extends ViewProps {
+  children: React.ReactNode;
+  scrollable?: boolean;
+  withGradient?: boolean;
 }
 
-/**
- * A container component that properly handles SafeArea and background colors.
- *
- * The outer View extends to full screen (including status bar area) with the background color,
- * while the inner SafeAreaView ensures content is within safe bounds.
- *
- * Usage:
- * ```tsx
- * <ScreenContainer className="p-4">
- *   <Text className="text-2xl font-bold text-foreground">
- *     Welcome
- *   </Text>
- * </ScreenContainer>
- * ```
- */
-export function ScreenContainer({
-  children,
-  edges = ["top", "left", "right"],
-  className,
-  containerClassName,
-  safeAreaClassName,
-  style,
-  ...props
+const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
+
+export function ScreenContainer({ 
+  children, 
+  className, 
+  style, 
+  scrollable = false,
+  withGradient = true,
+  ...props 
 }: ScreenContainerProps) {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const isTab = className?.includes("tab");
+  
+  const Content = scrollable ? ScrollView : View;
+
+  // Animation values for gradient positions
+  const startX = useSharedValue(0);
+  const startY = useSharedValue(0);
+  const endX = useSharedValue(1);
+  const endY = useSharedValue(1);
+
+  useEffect(() => {
+    if (withGradient) {
+      startX.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 10000, easing: Easing.linear }),
+          withTiming(0, { duration: 10000, easing: Easing.linear })
+        ),
+        -1,
+        true
+      );
+      startY.value = withRepeat(
+        withSequence(
+          withTiming(0.5, { duration: 8000, easing: Easing.linear }),
+          withTiming(0, { duration: 8000, easing: Easing.linear })
+        ),
+        -1,
+        true
+      );
+    }
+  }, [withGradient]);
+
+  const animatedGradientProps = useAnimatedProps(() => {
+    return {
+      start: { x: startX.value, y: startY.value },
+      end: { x: endX.value, y: endY.value },
+    };
+  });
+
   return (
-    <View
-      className={cn(
-        "flex-1",
-        "bg-background",
-        containerClassName
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {withGradient && (
+        <>
+          <AnimatedLinearGradient
+            colors={[colors.primary + '30', colors.background, colors.accent + '20', colors.background]}
+            animatedProps={animatedGradientProps as any}
+            style={StyleSheet.absoluteFill}
+          />
+          <View 
+            style={[
+              styles.headerBlur,
+              { height: insets.top + (isTab ? 10 : 20), backgroundColor: colors.background + '80' }
+            ]} 
+          />
+        </>
       )}
-      {...props}
-    >
-      <SafeAreaView
-        edges={edges}
-        className={cn("flex-1", safeAreaClassName)}
-        style={style}
+      <Content
+        className={className}
+        style={[{ flex: 1, paddingTop: insets.top }, style]}
+        {...props}
       >
-        <View className={cn("flex-1", className)}>{children}</View>
-      </SafeAreaView>
+        {children}
+      </Content>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  headerBlur: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+  }
+});

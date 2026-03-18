@@ -4,10 +4,21 @@ import themeConfig from "@/theme.config";
 
 export type ColorScheme = "light" | "dark";
 
-export const ThemeColors = themeConfig.themeColors;
+export const ThemeColors = themeConfig.themeColors as Record<ThemeColorName, { light: string; dark: string }>;
 
 type ThemeColorTokens = typeof ThemeColors;
-type ThemeColorName = keyof ThemeColorTokens;
+type ThemeColorName = 
+  | "primary"
+  | "background"
+  | "surface"
+  | "foreground"
+  | "muted"
+  | "border"
+  | "success"
+  | "warning"
+  | "error"
+  | "accent"
+  | "card";
 type SchemePalette = Record<ColorScheme, Record<ThemeColorName, string>>;
 type SchemePaletteItem = SchemePalette[ColorScheme];
 
@@ -36,6 +47,7 @@ type RuntimePalette = SchemePaletteItem & {
   tabIconDefault: string;
   tabIconSelected: string;
   border: string;
+  accent: string;
 };
 
 function buildRuntimePalette(scheme: ColorScheme): RuntimePalette {
@@ -49,6 +61,7 @@ function buildRuntimePalette(scheme: ColorScheme): RuntimePalette {
     tabIconDefault: base.muted,
     tabIconSelected: base.primary,
     border: base.border,
+    accent: base.accent,
   };
 }
 

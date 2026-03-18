@@ -137,29 +137,36 @@ export default function MultiplicationScreen() {
   };
 
   return (
-    <ScreenContainer>
+    <ScreenContainer scrollable>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <View style={styles.headerTop}>
-          <IconSymbol name="multiply" size={24} color={colors.primary} />
-          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Tabuadas</Text>
+      <View className="px-6 py-6 border-b" style={{ borderColor: colors.border }}>
+        <View className="flex-row items-center justify-between mb-6">
+          <View>
+            <Text className="text-2xl font-bold tracking-tight" style={{ color: colors.foreground }}>
+              Tabuadas
+            </Text>
+            <Text className="text-xs uppercase font-bold tracking-widest mt-1" style={{ color: colors.muted }}>
+              Domine a aritmética básica
+            </Text>
+          </View>
+          <View className="w-10 h-10 rounded-2xl items-center justify-center" style={{ backgroundColor: colors.primary + '15' }}>
+            <Ionicons name="apps-outline" size={20} color={colors.primary} />
+          </View>
         </View>
 
         {/* Number Selector */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.numberScroll}>
-          {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-6">
+          {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
             <TouchableOpacity
               key={n}
-              style={[
-                styles.numberChip,
-                {
-                  backgroundColor: selectedNumber === n ? colors.primary : colors.background,
-                  borderColor: selectedNumber === n ? colors.primary : colors.border,
-                },
-              ]}
+              className="w-12 h-12 rounded-2xl border items-center justify-center mr-3"
+              style={{
+                backgroundColor: selectedNumber === n ? colors.primary : colors.surface,
+                borderColor: selectedNumber === n ? colors.primary : colors.border,
+              }}
               onPress={() => { setSelectedNumber(n); setMode("table"); setHighlightedRow(null); }}
             >
-              <Text style={[styles.numberChipText, { color: selectedNumber === n ? "#fff" : colors.foreground }]}>
+              <Text className="text-lg font-bold" style={{ color: selectedNumber === n ? "#fff" : colors.foreground }}>
                 {n}
               </Text>
             </TouchableOpacity>
@@ -167,20 +174,29 @@ export default function MultiplicationScreen() {
         </ScrollView>
 
         {/* Mode Toggle */}
-        <View style={styles.modeRow}>
+        <View 
+          className="flex-row p-1 rounded-2xl" 
+          style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}
+        >
           <TouchableOpacity
-            style={[styles.modeBtn, mode === "table" && { backgroundColor: colors.primary }]}
+            className="flex-1 py-3 items-center rounded-xl flex-row justify-center gap-2"
+            style={mode === "table" ? { backgroundColor: colors.primary } : {}}
             onPress={() => setMode("table")}
           >
-            <IconSymbol name="list.number" size={16} color={mode === "table" ? "#fff" : colors.muted} />
-            <Text style={[styles.modeBtnText, { color: mode === "table" ? "#fff" : colors.muted }]}>Tabuada</Text>
+            <Ionicons name="list" size={16} color={mode === "table" ? "#fff" : colors.muted} />
+            <Text className="font-bold text-xs uppercase tracking-widest" style={{ color: mode === "table" ? "#fff" : colors.muted }}>
+              Visualizar
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.modeBtn, mode === "quiz" && { backgroundColor: "#6A1B9A" }]}
+            className="flex-1 py-3 items-center rounded-xl flex-row justify-center gap-2"
+            style={mode === "quiz" ? { backgroundColor: colors.primary } : {}}
             onPress={startQuiz}
           >
-            <IconSymbol name="checkmark.circle.fill" size={16} color={mode === "quiz" ? "#fff" : colors.muted} />
-            <Text style={[styles.modeBtnText, { color: mode === "quiz" ? "#fff" : colors.muted }]}>Quiz</Text>
+            <Ionicons name="trophy" size={16} color={mode === "quiz" ? "#fff" : colors.muted} />
+            <Text className="font-bold text-xs uppercase tracking-widest" style={{ color: mode === "quiz" ? "#fff" : colors.muted }}>
+              Desafio Quiz
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
