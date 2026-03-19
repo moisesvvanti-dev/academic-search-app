@@ -14,6 +14,12 @@ import { useColors } from "@/hooks/use-colors";
 import { startOAuthLogin } from "@/constants/oauth";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown, ZoomIn, FadeInUp } from "react-native-reanimated";
+import { z } from "zod";
+
+const authSchema = z.object({
+  email: z.string().email("Por favor, insira um e-mail válido (ex: user@nexus.io)."),
+  password: z.string().min(6, "Por motivos de segurança, a senha deve conter pelo menos 6 caracteres."),
+});
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -26,8 +32,9 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async () => {
-    if (!email || !password) {
-      Alert.alert("Erro", "Por favor, preencha todos os campos.");
+    const parseResult = authSchema.safeParse({ email, password });
+    if (!parseResult.success) {
+      Alert.alert("Erro de Validação", parseResult.error.issues[0].message);
       return;
     }
 

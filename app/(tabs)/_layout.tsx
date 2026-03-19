@@ -78,6 +78,24 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="news"
+        options={{
+          title: "Notícias",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "newspaper" : "newspaper-outline"} size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="portfolios"
+        options={{
+          title: "Aberto",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "folder-open" : "folder-open-outline"} size={24} color={color} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

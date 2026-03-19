@@ -17,8 +17,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "expo-router";
 import { searchInternet, type SearchResult } from "@/lib/internet-search-service";
 import { shareResult } from "@/lib/sharing-service";
-import { generateAIResponse } from "@/lib/ollama-service";
-import { generateAcademicReport, extractNumericData } from "@/lib/report-service";
+import { extractNumericData } from "@/lib/report-service";
 import { DataTable } from "@/components/ui/data-table";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { 
@@ -28,6 +27,9 @@ import Animated, {
   SlideInRight,
   ZoomIn
 } from "react-native-reanimated";
+import { z } from "zod";
+
+const searchSchema = z.string().min(2, "A pesquisa deve conter pelo menos 2 caracteres.");
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -38,11 +40,7 @@ export default function SearchScreen() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchType, setSearchType] = useState<"web" | "news" | "images">("web");
-  const [isAiEnabled, setIsAiEnabled] = useState(false);
-  const [aiResponse, setAiResponse] = useState<string | null>(null);
-  const [isAiLoading, setIsAiLoading] = useState(false);
-  const [report, setReport] = useState<string | null>(null);
-  const [isReportLoading, setIsReportLoading] = useState(false);
+
   const [viewMode, setViewMode] = useState<"list" | "table">("list");
 
   // Redirect to login if not authenticated
@@ -57,22 +55,19 @@ export default function SearchScreen() {
   }, [isAuthenticated, user]);
 
   const handleSearch = async () => {
-    if (!query.trim()) {
-      Alert.alert("Error", "Please enter a search term");
+    const parseResult = searchSchema.safeParse(query.trim());
+    if (!parseResult.success) {
+      Alert.alert("Alerta de Parâmetro", parseResult.error.issues[0].message);
       return;
     }
 
     setIsLoading(true);
-    setAiResponse(null);
     try {
       const response = await searchInternet(query, searchType);
       setResults(response.results);
 
       if (response.results.length === 0) {
         Alert.alert("No Results", `No ${searchType} results found for "${query}"`);
-      } else if (isAiEnabled && searchType === "web") {
-        // Run AI generation concurrently or after results
-        handleAiGeneration(query, response.results);
       }
     } catch (error: any) {
       Alert.alert("Search Error", error.message || "Failed to search");
@@ -81,36 +76,7 @@ export default function SearchScreen() {
     }
   };
 
-  const handleAiGeneration = async (query: string, searchResults: SearchResult[]) => {
-    setIsAiLoading(true);
-    try {
-      const context = searchResults
-        .slice(0, 5)
-        .map((r) => `${r.title}: ${r.description}`)
-        .join("\n\n");
-      const response = await generateAIResponse(query, context);
-      setAiResponse(response);
-    } catch (error: any) {
-      console.error("AI Error:", error);
-      setAiResponse("Erro ao gerar resposta da IA. Verifique se o Ollama está rodando localmente.");
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
 
-  const handleGenerateReport = async () => {
-    if (results.length === 0) return;
-    setIsReportLoading(true);
-    setReport(null);
-    try {
-      const resp = await generateAcademicReport(query, results);
-      setReport(resp);
-    } catch (error) {
-      Alert.alert("Erro", "Falha ao gerar relatório acadêmico.");
-    } finally {
-      setIsReportLoading(false);
-    }
-  };
 
   const handleShare = async (result: SearchResult) => {
     try {
@@ -219,10 +185,10 @@ export default function SearchScreen() {
               </View>
             </ScrollView>
 
-            {/* Search Button & AI Toggle */}
+            {/* Search Button */}
             <View className="flex-row gap-4">
               <TouchableOpacity
-                className="flex-[3] rounded-full p-5 items-center justify-center shadow-2xl flex-row gap-3"
+                className="flex-1 rounded-full p-5 items-center justify-center shadow-2xl flex-row gap-3"
                 style={{ 
                   backgroundColor: colors.accent, 
                   shadowColor: colors.accent, 
@@ -244,55 +210,14 @@ export default function SearchScreen() {
                   </>
                 )}
               </TouchableOpacity>
-
-              <TouchableOpacity
-                className={`flex-1 rounded-[30px] p-4 items-center justify-center border-2 ${isAiEnabled ? 'shadow-lg' : ''}`}
-                style={{
-                  backgroundColor: isAiEnabled ? colors.primary + '20' : 'transparent',
-                  borderColor: isAiEnabled ? colors.primary : colors.border,
-                }}
-                onPress={() => setIsAiEnabled(!isAiEnabled)}
-              >
-                <Ionicons 
-                  name={isAiEnabled ? "sparkles" : "sparkles-outline"} 
-                  size={24} 
-                  color={isAiEnabled ? colors.primary : colors.muted} 
-                />
-              </TouchableOpacity>
             </View>
           </Animated.View>
 
-          {/* AI Response Section */}
-          {(isAiLoading || aiResponse) && (
-            <Animated.View 
-              entering={ZoomIn.duration(600)}
-              className="p-8 rounded-[40px] glass-extreme border-2"
-              style={{ borderColor: colors.accent + '40' }}
-            >
-              <View className="flex-row items-center gap-3 mb-4">
-                <View className="p-3 rounded-2xl" style={{ backgroundColor: colors.accent + '20' }}>
-                  <Ionicons name="bulb" size={24} color={colors.accent} />
-                </View>
-                <Text className="text-xl font-black tracking-tighter" style={{ color: colors.foreground }}>
-                  Insight Estratégico
-                </Text>
-                {isAiLoading && <ActivityIndicator size="small" color={colors.accent} className="ml-auto" />}
-              </View>
-              {aiResponse ? (
-                <Text className="text-lg leading-relaxed font-semibold italic opacity-90" style={{ color: colors.foreground }}>
-                  "{aiResponse}"
-                </Text>
-              ) : (
-                <Text className="text-base font-medium opacity-60" style={{ color: colors.foreground }}>
-                  Nexus AI está sintetizando as evidências...
-                </Text>
-              )}
-            </Animated.View>
-          )}
+
 
           {/* Action Row */}
           {results.length > 0 && (
-            <Animated.View entering={FadeInUp} className="flex-row gap-3">
+            <Animated.View entering={FadeInUp} className="flex-row">
               <TouchableOpacity
                 className="flex-1 flex-row items-center justify-center gap-3 p-5 rounded-[28px] glass-extreme border-2"
                 style={{ borderColor: colors.primary + '30' }}
@@ -302,24 +227,6 @@ export default function SearchScreen() {
                 <Text className="text-xs font-black uppercase tracking-widest" style={{ color: colors.primary }}>
                   {viewMode === "list" ? "Modo Tabela" : "Modo Lista"}
                 </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                className="flex-[1.5] flex-row items-center justify-center gap-3 p-5 rounded-[28px] shadow-2xl"
-                style={{ backgroundColor: colors.primary, shadowColor: colors.primary, shadowOpacity: 0.4 }}
-                onPress={handleGenerateReport}
-                disabled={isReportLoading}
-              >
-                {isReportLoading ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <>
-                    <Ionicons name="analytics" size={22} color="#FFFFFF" />
-                    <Text className="text-xs font-black text-white uppercase tracking-widest">
-                      Gerar Relatório
-                    </Text>
-                  </>
-                )}
               </TouchableOpacity>
             </Animated.View>
           )}
